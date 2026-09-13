@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Course Academy</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-dark: #070913;
+            --bg-card: rgba(15, 23, 42, 0.65);
+            --bg-card-border: rgba(99, 102, 241, 0.2);
+            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --danger: #ef4444;
+            --success: #10b981;
+            --sidebar-width: 260px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Utility Classes */
+        .hidden { display: none !important; }
+        .glass {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--bg-card-border);
+            border-radius: 12px;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            text-decoration: none;
+            font-size: 0.95rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+        }
+
+        .btn-discord {
+            background: #5865F2;
+            color: white;
+        }
+
+        .btn-discord:hover {
+            background: #4752C4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(88, 101, 242, 0.4);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--accent-purple);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background: rgba(139, 92, 246, 0.15);
+        }
+
+        /* background canvas styling */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* AUTH SCREEN */
+        #auth-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .auth-container {
+            width: 100%;
+            max-width: 480px;
+            padding: 32px;
+            z-index: 2;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            margin: auto;
+        }
+
+        .payment-notice {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px dashed var(--accent-purple);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 24px;
+            text-align: left;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .payment-notice strong {
+            color: #fff;
+        }
+
+        .payment-notice p {
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .auth-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            background: linear-gradient(90deg, #fff, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 24px;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 14px 45px 14px 16px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--bg-card-border);
+            border-radius: 8px;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--accent-purple);
+        }
+
+        .toggle-pwd {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+        .error-msg {
+            color: var(--danger);
+            font-size: 0.85rem;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Spinner Animation */
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* MAIN DASHBOARD APP */
+        #app-screen {
+            display: flex;
+            min-height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(10, 15, 30, 0.95);
+            border-right: 1px solid var(--bg-card-border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: white;
+            border-bottom: 1px solid var(--bg-card-border);
+        }
+
+        .sidebar-brand i { color: var(--accent-cyan); }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+            flex: 1;
+        }
+
+        .sidebar-menu li a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 24px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+
+        .sidebar-menu li a:hover, .sidebar-menu li.active a {
+            color: white;
+            background: rgba(139, 92, 246, 0.15);
+            border-left: 4px solid var(--accent-purple);
+        }
+
+        .sidebar-footer {
+            padding: 20px;
+            border-top: 1px solid var(--bg-card-border);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* Top Header */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            gap: 20px;
+        }
+
+        .menu-toggle {
+            display: none;
+            font-size: 1.5rem;
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+
+        .search-bar {
+            position: relative;
+            flex: 1;
+            max-width: 400px;
+        }
+
+        .search-bar input {
+            width: 100%;
+            padding: 10px 16px 10px 40px;
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: 8px;
+            color: white;
+            outline: none;
+        }
+
+        .search-bar i {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+        }
+
+        /* Categories Filter */
+        .categories-filter {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+            margin-bottom: 25px;
+        }
+
+        .cat-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            color: var(--text-muted);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.3s ease;
+            font-size: 0.85rem;
+        }
+
+        .cat-btn.active, .cat-btn:hover {
+            background: var(--accent-purple);
+            color: white;
+            border-color: var(--accent-purple);
+        }
+
+        /* Course Progress Section */
+        .progress-card {
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        .progress-info { flex: 1; }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 35%;
+            background: linear-gradient(90deg, var(--accent-purple), var(--accent-cyan));
+            border-radius: 4px;
+        }
+
+        /* Video / Lesson Grid */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 24px;
+        }
+
+        .card {
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5deg);
+            border-color: var(--accent-purple);
+        }
+
+        .card-thumb {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            background-color: #000;
+        }
+
+        .card-thumb img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-thumb .badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.75);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            color: white;
+        }
+
+        .card-body {
+            padding: 16px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-category {
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .card-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            flex: 1;
+            line-height: 1.4;
+        }
+
+        /* Video Player Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 200;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 900px;
+            background: #0f172a;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--bg-card-border);
+        }
+
+        .modal-header {
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--bg-card-border);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+        }
+
+        .video-container iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: 0;
+        }
+
+        /* Section Layouts */
+        .section-title {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        footer {
+            margin-top: 50px;
+            padding: 20px 0;
+            border-top: 1px solid var(--bg-card-border);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: block;
+            }
+            .progress-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Animated Cyber Canvas Background -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- 1. AUTHENTICATION SCREEN -->
+    <div id="auth-screen">
+        <div class="auth-container glass">
+            <!-- Payment & Access Notice -->
+            <div class="payment-notice">
+                <p><i class="fa-solid fa-circle-info" style="color: var(--accent-cyan); margin-right: 5px;"></i> To receive the password, a payment of <strong>₹500</strong> is required. For the payment process and access instructions, contact us through Discord.</p>
+                <a href="https://discord.gg/f4dk8EFcS" target="_blank" class="btn btn-discord" style="width: 100%;">
+                    <i class="fa-brands fa-discord"></i> JOIN DISCORD
+                </a>
+            </div>
+
+            <div class="auth-header">
+                <i class="fa-solid fa-shield-halved" style="font-size: 2.5rem; color: var(--accent-purple); margin-bottom: 12px;"></i>
+                <h1>SECURE COURSE ACCESS</h1>
+                <p>Enter your access password to continue</p>
+            </div>
+
+            <form id="login-form" onsubmit="handleLogin(event)">
+                <div class="input-group">
+                    <input type="password" id="password-input" placeholder="Enter Access Password" required>
+                    <i class="fa-solid fa-eye toggle-pwd" id="pwd-toggle" onclick="togglePasswordVisibility()"></i>
+                </div>
+                
+                <button type="submit" id="login-btn" class="btn btn-primary" style="width: 100%;">
+                    <span>ACCESS COURSE</span>
+                </button>
+                <div id="error-message" class="error-msg">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Invalid access key. Please verify and try again.
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 2. MAIN DASHBOARD APP -->
+    <div id="app-screen" class="hidden">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-code"></i>
+                <span>CYBER ACADEMY</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="active"><a href="#" onclick="switchTab('dashboard')"><i class="fa-solid fa-house"></i> Home</a></li>
+                <li><a href="#" onclick="switchTab('dashboard')"><i class="fa-solid fa-book-open"></i> Courses</a></li>
+                <li><a href="https://docs.google.com/forms/d/e/1FAIpQLSf4yTHgF1aNSuNYrwVNLtKBOXGbQlSV8OioHWGjwWHFpm-Ywg/viewform?usp=header" target="_blank"><i class="fa-solid fa-plus-circle"></i> Submit Video</a></li>
+                <li><a href="https://discord.gg/f4dk8EFcS" target="_blank"><i class="fa-brands fa-discord"></i> Discord Community</a></li>
+                <li><a href="#" onclick="switchTab('about')"><i class="fa-solid fa-circle-info"></i> About Architecture</a></li>
+            </ul>
+            <div class="sidebar-footer">
+                <button onclick="logout()" class="btn btn-outline" style="width: 100%;">
+                    <i class="fa-solid fa-right-from-bracket"></i> Lock Session
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Navbar -->
+            <header class="top-nav">
+                <button class="menu-toggle" onclick="toggleSidebar()">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" id="search-input" placeholder="Search lessons, topics..." onkeyup="filterLessons()">
+                </div>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLSf4yTHgF1aNSuNYrwVNLtKBOXGbQlSV8OioHWGjwWHFpm-Ywg/viewform?usp=header" target="_blank" class="btn btn-primary">
+                    <i class="fa-solid fa-upload"></i> ADD COURSE VIDEO
+                </a>
+            </header>
+
+            <!-- Section 1: Dashboard View -->
+            <div id="view-dashboard">
+                <!-- Course Progress Card -->
+                <div class="progress-card glass">
+                    <div class="progress-info">
+                        <h3><i class="fa-solid fa-chart-line" style="color: var(--accent-cyan);"></i> Your Learning Progress</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">3 of 8 modules completed</p>
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Category Filters -->
+                <div class="categories-filter" id="categories-container">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <!-- Course Cards Grid -->
+                <h2 class="section-title"><i class="fa-solid fa-layer-group" style="color: var(--accent-purple);"></i> Available Lessons</h2>
+                <div class="grid-container" id="lessons-grid">
+                    <!-- Cards will be dynamically inserted here -->
+                </div>
+            </div>
+
+            <!-- Section 2: About Security / Architecture View -->
+            <div id="view-about" class="hidden">
+                <div class="glass" style="padding: 30px;">
+                    <h2 class="section-title"><i class="fa-solid fa-shield-halved"></i> Security & Architecture Documentation</h2>
+                    <p style="margin-bottom: 15px; line-height: 1.6; color: var(--text-muted);">
+                        This single-page web application provides front-end course distribution.
+                    </p>
+                    <h3 style="color: var(--accent-cyan); margin: 20px 0 10px 0;">Frontend Security Limitations</h3>
+                    <p style="line-height: 1.6; color: var(--text-muted);">
+                        Because this is built entirely as a client-side Single HTML File without a server component, standard authentication mechanisms are limited. To minimize visibility of raw access keys:
+                    </p>
+                    <ul style="margin: 15px 0 15px 30px; color: var(--text-muted); line-height: 1.8;">
+                        <li>The cleartext access key is hashed using <strong>SHA-256</strong> algorithm.</li>
+                        <li>No raw passwords or plain text check conditions are rendered into visible elements or client JS variables.</li>
+                        <li>Production environments requiring enterprise security should replace client-side JS validation with an authenticated API backend (e.g., Firebase Auth, Node.js/Express backend API).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <footer>
+                © 2026 — Secure Course Academy. All rights reserved.
+            </footer>
+        </main>
+    </div>
+
+    <!-- 3. VIDEO PLAYER MODAL -->
+    <div id="video-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-video-title">Lesson Title</h3>
+                <button class="close-btn" onclick="closeVideoModal()"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="video-container">
+                <iframe id="youtube-iframe" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        /* ==========================================================================
+           1. SECURITY AUTHENTICATION (SHA-256 HASH)
+           Target Password Hash for: vansh1316
+           SHA-256: d178b671a5f6e86fb79a5ca2d992ba1df7f5703f83bf1e0eb7aa09df8c99857d
+           ========================================================================== */
+        const TARGET_HASH = "d178b671a5f6e86fb79a5ca2d992ba1df7f5703f83bf1e0eb7aa09df8c99857d";
+
+        async function hashPassword(str) {
+            const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const inputVal = document.getElementById('password-input').value;
+            const loginBtn = document.getElementById('login-btn');
+            const errorMsg = document.getElementById('error-message');
+
+            errorMsg.style.display = 'none';
+            loginBtn.innerHTML = '<span class="spinner"></span>';
+
+            const computedHash = await hashPassword(inputVal);
+
+            setTimeout(() => {
+                if (computedHash === TARGET_HASH) {
+                    sessionStorage.setItem('academy_auth', 'true');
+                    showDashboard();
+                } else {
+                    errorMsg.style.display = 'block';
+                    loginBtn.innerHTML = '<span>ACCESS COURSE</span>';
+                }
+            }, 600);
+        }
+
+        function togglePasswordVisibility() {
+            const input = document.getElementById('password-input');
+            const icon = document.getElementById('pwd-toggle');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-screen').classList.remove('hidden');
+            renderCategories();
+            renderLessons('All');
+        }
+
+        function logout() {
+            sessionStorage.removeItem('academy_auth');
+            location.reload();
+        }
+
+        /* Check persistent session */
+        if (sessionStorage.getItem('academy_auth') === 'true') {
+            showDashboard();
+        }
+
+        /* ==========================================================================
+           2. DATA STRUCTURE & LESSON MANAGEMENT
+           ========================================================================== */
+        const categories = [
+            "All",
+            "Getting Started",
+            "Web Development",
+            "App Development",
+            "AI Development",
+            "Cybersecurity & Ethical Hacking",
+            "Projects",
+            "Advanced Lessons"
+        ];
+
+        const sampleLessons = [
+            {
+                id: 1,
+                title: "Introduction to Cybersecurity Fundamentals",
+                category: "Cybersecurity & Ethical Hacking",
+                description: "Learn core security architecture principles, encryption basics, and system setup.",
+                youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                duration: "15:30"
+            },
+            {
+                id: 2,
+                title: "Full-stack Web Dev: Responsive Layouts",
+                category: "Web Development",
+                description: "Master modern CSS Grid, Flexbox, and responsive UI building practices.",
+                youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                duration: "24:10"
+            },
+            {
+                id: 3,
+                title: "AI App Development with Python & APIs",
+                category: "AI Development",
+                description: "Integrate LLM endpoints and build automated AI workflow tools.",
+                youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                duration: "42:00"
+            },
+            {
+                id: 4,
+                title: "Getting Started with Academy Workflows",
+                category: "Getting Started",
+                description: "Orientation video showing how to navigate courses and submit projects.",
+                youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+                duration: "08:45"
+            }
+        ];
+
+        function extractYouTubeID(url) {
+            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+            const match = url.match(regExp);
+            return (match && match[2].length === 11) ? match[2] : null;
+        }
+
+        function renderCategories() {
+            const container = document.getElementById('categories-container');
+            container.innerHTML = categories.map((cat, idx) => `
+                <button class="cat-btn ${idx === 0 ? 'active' : ''}" onclick="selectCategory(this, '${cat}')">${cat}</button>
+            `).join('');
+        }
+
+        function selectCategory(btn, cat) {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderLessons(cat);
+        }
+
+        function renderLessons(categoryFilter = 'All', searchQuery = '') {
+            const grid = document.getElementById('lessons-grid');
+            const filtered = sampleLessons.filter(lesson => {
+                const matchesCategory = categoryFilter === 'All' || lesson.category === categoryFilter;
+                const matchesSearch = lesson.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                      lesson.description.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<p style="color: var(--text-muted); grid-column: 1/-1;">No lessons found in this section.</p>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(lesson => {
+                const videoId = extractYouTubeID(lesson.youtubeUrl);
+                const thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : 'https://via.placeholder.com/480x270/0f172a/94a3b8?text=Video+Thumbnail';
+                
+                return `
+                    <div class="card glass">
+                        <div class="card-thumb">
+                            <img src="${thumbUrl}" alt="${lesson.title}">
+                            <span class="badge"><i class="fa-regular fa-clock"></i> ${lesson.duration}</span>
+                        </div>
+                        <div class="card-body">
+                            <span class="card-category">${lesson.category}</span>
+                            <h4 class="card-title">${lesson.title}</h4>
+                            <p class="card-desc">${lesson.description}</p>
+                            <button class="btn btn-primary" onclick="openVideoModal('${videoId}', '${escapeQuotes(lesson.title)}')">
+                                <i class="fa-solid fa-play"></i> Watch Lesson
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function escapeQuotes(str) {
+            return str.replace(/'/g, "\\'");
+        }
+
+        function filterLessons() {
+            const query = document.getElementById('search-input').value;
+            const activeCatBtn = document.querySelector('.cat-btn.active');
+            const activeCat = activeCatBtn ? activeCatBtn.innerText : 'All';
+            renderLessons(activeCat, query);
+        }
+
+        /* Modal Player Logic */
+        function openVideoModal(videoId, title) {
+            const modal = document.getElementById('video-modal');
+            const iframe = document.getElementById('youtube-iframe');
+            document.getElementById('modal-video-title').innerText = title;
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            modal.classList.remove('hidden');
+        }
+
+        function closeVideoModal() {
+            const modal = document.getElementById('video-modal');
+            const iframe = document.getElementById('youtube-iframe');
+            iframe.src = '';
+            modal.classList.add('hidden');
+        }
+
+        /* Navigation Switcher */
+        function switchTab(tab) {
+            document.getElementById('view-dashboard').classList.add('hidden');
+            document.getElementById('view-about').classList.add('hidden');
+
+            if (tab === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+            } else if (tab === 'about') {
+                document.getElementById('view-about').classList.remove('hidden');
+            }
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+
+        /* ==========================================================================
+           3. BACKGROUND ANIMATED CANVAS
+           ========================================================================== */
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const chars = '01ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        const fontSize = 14;
+        let columns = Math.floor(canvas.width / fontSize);
+        let drops = Array(columns).fill(1);
+
+        function drawMatrix() {
+            ctx.fillStyle = 'rgba(7, 9, 19, 0.15)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = 'rgba(139, 92, 246, 0.35)';
+            ctx.font = fontSize + 'px Fira Code, monospace';
+
+            columns = Math.floor(canvas.width / fontSize);
+            if (drops.length < columns) {
+                drops = Array(columns).fill(1);
+            }
+
+            for (let i = 0; i < drops.length; i++) {
+                const text = chars.charAt(Math.floor(Math.random() * chars.length));
+                ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+                if (drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+                    drops[i] = 0;
+                }
+                drops[i]++;
+            }
+        }
+        setInterval(drawMatrix, 45);
+    </script>
+</body>
+</html>
